@@ -368,10 +368,17 @@ try {
     route print   | Out-String | Save-Output -Name "route_print"
 } catch { "Failed to capture network configuration: $_" | Save-Output -Name "network_error" }
 
-"Collection finished: $(Get-Date)" | Save-Output -Name "collection_end"
+Collection finished: $(Get-Date)" | Save-TextFile (Join-Path $outDir "collection_end.txt")
 
-# Manifest
-Get-ChildItem -Path $outDir -File | Select Name,Length |
-    Format-Table -AutoSize | Out-String | Save-Output -Name "manifest"
-
-Write-Host "Enumeration complete. Outputs saved to: $outDir"
+# === Zip the entire results folder ===
+try {
+    $zipPath = "$outDir.zip"
+    if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
+    Compress-Archive -Path $outDir -DestinationPath $zipPath -Force
+    Write-Host ""
+    Write-Host "Enumeration complete!"
+    Write-Host "Results folder : $outDir"
+    Write-Host "ZIP archive    : $zipPath"
+} catch {
+    Write-Warning "Failed to create ZIP archive: $_"
+}
